@@ -1,27 +1,76 @@
+// Adres backendu:
 export const API_URL = "https://techmo.onrender.com";
- // <-- ZMIEŃ na link backendu po deployu!
 
-export async function apiGet(path) {
-  const r = await fetch(API + path);
-  return await r.json();
+// Pomocnik: pobierz token z localStorage (jeśli jest)
+function getToken() {
+  return localStorage.getItem("token");
 }
-export async function apiPost(path, data) {
-  const r = await fetch(API + path, {
+
+// Funkcja do logowania (POST /login)
+export async function apiPostLogin(username, password) {
+  const res = await fetch(`${API_URL}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    body: JSON.stringify({ username, password })
   });
-  return await r.json();
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || "Błąd logowania");
+  }
+  return await res.json();
 }
+
+// GET (np. /tasks, /defects, /materials)
+export async function apiGet(path) {
+  const res = await fetch(`${API_URL}${path}`, {
+    headers: {
+      "Authorization": "Bearer " + getToken()
+    }
+  });
+  if (res.status === 401) throw new Error("Brak autoryzacji");
+  if (!res.ok) throw new Error("Błąd API");
+  return await res.json();
+}
+
+// PUT (aktualizacja zadania/usterki)
 export async function apiPut(path, data) {
-  const r = await fetch(API + path, {
+  const res = await fetch(`${API_URL}${path}`, {
     method: "PUT",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(data),
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + getToken()
+    },
+    body: JSON.stringify(data)
   });
-  return await r.json();
+  if (res.status === 401) throw new Error("Brak autoryzacji");
+  if (!res.ok) throw new Error("Błąd API");
+  return await res.json();
 }
+
+// DELETE (usuwanie materiału)
 export async function apiDelete(path) {
-  const r = await fetch(API + path, { method: "DELETE" });
-  return await r.json();
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "DELETE",
+    headers: {
+      "Authorization": "Bearer " + getToken()
+    }
+  });
+  if (res.status === 401) throw new Error("Brak autoryzacji");
+  if (!res.ok) throw new Error("Błąd API");
+  return await res.json();
+}
+
+// POST – jeśli będziesz potrzebował np. dodawać nowe materiały/usterki
+export async function apiPost(path, data) {
+  const res = await fetch(`${API_URL}${path}`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": "Bearer " + getToken()
+    },
+    body: JSON.stringify(data)
+  });
+  if (res.status === 401) throw new Error("Brak autoryzacji");
+  if (!res.ok) throw new Error("Błąd API");
+  return await res.json();
 }
