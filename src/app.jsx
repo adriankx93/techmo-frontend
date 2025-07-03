@@ -119,6 +119,12 @@ export default function App() {
     await apiDelete(`/materials/${id}`);
     setMaterials(materials.filter(m => m.id !== id));
   };
+  const handleStatusMaterial = (id, status) => {
+  setMaterials(materials =>
+    materials.map(m => m.id === id ? { ...m, status } : m)
+  );
+  // Możesz dodać apiPut(`/materials/${id}`, { ...materials.find(m => m.id === id), status });
+};
 
   // Statystyki do dashboardu
   const stats = {
@@ -174,6 +180,7 @@ export default function App() {
             data={materials}
             onAdd={handleAddMaterial}
             onRemove={handleRemoveMaterial}
+            onStatus={handleStatusMaterial}
           />
         )}
       </main>
