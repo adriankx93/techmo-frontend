@@ -1,50 +1,33 @@
-import { Trash2, RotateCcw } from "lucide-react";
-
 export default function ArchiveList({ archivedTasks, archivedDefects, archivedMaterials, onRestore }) {
   return (
     <div className="p-8">
-      <h2 className="text-xl font-bold mb-4">Archiwum zrealizowanych</h2>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <div>
-          <h3 className="font-semibold mb-2">Zadania</h3>
-          <ul>
-            {archivedTasks.map(t => (
-              <li key={t.id} className="flex justify-between items-center border-b py-2 text-green-700">
-                <span>{t.desc}</span>
-                <button title="Przywróć" onClick={() => onRestore("task", t.id)}>
-                  <RotateCcw className="text-blue-500 hover:text-blue-700" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h3 className="font-semibold mb-2">Usterki</h3>
-          <ul>
-            {archivedDefects.map(d => (
-              <li key={d.id} className="flex justify-between items-center border-b py-2 text-green-700">
-                <span>{d.desc}</span>
-                <button title="Przywróć" onClick={() => onRestore("defect", d.id)}>
-                  <RotateCcw className="text-blue-500 hover:text-blue-700" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div>
-          <h3 className="font-semibold mb-2">Materiały</h3>
-          <ul>
-            {archivedMaterials.map(m => (
-              <li key={m.id} className="flex justify-between items-center border-b py-2 text-green-700">
-                <span>{m.name}</span>
-                <button title="Przywróć" onClick={() => onRestore("material", m.id)}>
-                  <RotateCcw className="text-blue-500 hover:text-blue-700" />
-                </button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
+      <div className="text-2xl font-bold mb-6">Archiwum zrealizowanych</div>
+      <Section title="Zadania" data={archivedTasks} type="task" onRestore={onRestore} fields={["desc", "date", "assignedTo"]} />
+      <Section title="Usterki" data={archivedDefects} type="defect" onRestore={onRestore} fields={["desc", "location"]} />
+      <Section title="Materiały" data={archivedMaterials} type="material" onRestore={onRestore} fields={["name"]} />
+    </div>
+  );
+}
+function Section({ title, data, type, onRestore, fields }) {
+  return (
+    <div className="mb-8">
+      <div className="font-bold mb-2">{title}</div>
+      <table className="w-full bg-white rounded-xl shadow overflow-hidden mb-2">
+        <thead className="bg-blue-50">
+          <tr>
+            {fields.map(f => <th className="py-2 px-3" key={f}>{f}</th>)}
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map(item => (
+            <tr key={item.id}>
+              {fields.map(f => <td className="px-2" key={f}>{item[f]}</td>)}
+              <td><button className="text-xs text-blue-600 underline" onClick={() => onRestore(type, item.id)}>Przywróć</button></td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
