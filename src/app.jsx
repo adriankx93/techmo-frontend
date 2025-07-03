@@ -2,28 +2,111 @@ import React, { useState, useEffect } from "react";
 import Sidebar from "./components/Sidebar";
 import Header from "./components/Header";
 import Dashboard from "./components/Dashboard";
-import { apiGet } from "./api";
-// ... import TaskList, DefectList, MaterialList
+import TaskList from "./components/TaskList";
+import DefectList from "./components/DefectList";
+import MaterialList from "./components/MaterialList";
+import { apiGet, apiPost, apiPut, apiDelete } from "./api";
+
+function LoginScreen({ onLogin }) {
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [err, setErr] = useState(null);
+
+  const handleLogin = async e => {
+    e.preventDefault();
+    setErr(null);
+    try {
+      // Przykład: /login zwraca {token, user: {name}}
+      const res = await apiPost("/login", { username, password });
+      if (res.token) {
+        localStorage.setItem("token", res.token);
+        localStorage.setItem("user", res.user?.name || username);
+        onLogin(res.user?.name || username);
+      } else {
+        setErr("Nieprawidłowy login lub hasło");
+      }
+    } catch {
+      setErr("Błąd logowania");
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-blue-100">
+      <form className="bg-white p-8 rounded-xl shadow-xl min-w-[340px]" onSubmit={handleLogin}>
+        <div className="text-2xl font-bold text-blue-900 mb-4 text-center">Logowanie</div>
+        <input
+          className="w-full border rounded px-3 py-2 mb-3"
+          placeholder="Nazwa użytkownika"
+          value={username}
+          onChange={e => setUsername(e.target.value)}
+          required
+        />
+        <input
+          className="w-full border rounded px-3 py-2 mb-3"
+          placeholder="Hasło"
+          type="password"
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          required
+        />
+        {err && <div className="text-red-500 text-sm mb-2">{err}</div>}
+        <button
+          className="bg-blue-700 hover:bg-blue-800 text-white font-semibold w-full py-2 rounded"
+          type="submit"
+        >
+          Zaloguj się
+        </button>
+      </form>
+    </div>
+  );
+}
 
 export default function App() {
+  const [loggedIn, setLoggedIn] = useState(!!localStorage.getItem("token"));
+  const [user, setUser] = useState(localStorage.getItem("user") || "");
   const [tab, setTab] = useState("dashboard");
   const [tasks, setTasks] = useState([]);
   const [defects, setDefects] = useState([]);
   const [materials, setMaterials] = useState([]);
 
+  // Automatyczne pobieranie danych po zalogowaniu
   useEffect(() => {
+    if (!loggedIn) return;
     apiGet("/tasks").then(setTasks);
     apiGet("/defects").then(setDefects);
     apiGet("/materials").then(setMaterials);
-  }, []);
+  }, [loggedIn]);
 
+  // Handlery do list
+  const handleToggleTask = async id => {
+    const t = tasks.find(t => t.id === id);
+    await apiPut(`/tasks/${id}`, { ...t, done: !t.done });
+    setTasks(tasks.map(t => t.id === id ? { ...t, done: !t.done } : t));
+  };
+  const handleRemarkTask = (id, remark) => {
+    setTasks(tasks.map(t => t.id === id ? { ...t, remark } : t));
+    apiPut(`/tasks/${id}`, { ...tasks.find(t => t.id === id), remark });
+  };
+  const handleAssignTask = (id, assignedTo) => {
+    setTasks(tasks.map(t => t.id === id ? { ...t, assignedTo } : t));
+    apiPut(`/tasks/${id}`, { ...tasks.find(t => t.id === id), assignedTo });
+  };
+  const handleStatusDefect = async (id, status) => {
+    await apiPut(`/defects/${id}`, { ...defects.find(d => d.id === id), status });
+    setDefects(defects.map(d => d.id === id ? { ...d, status } : d));
+  };
+  const handleRemoveMaterial = async id => {
+    await apiDelete(`/materials/${id}`);
+    setMaterials(materials.filter(m => m.id !== id));
+  };
+
+  // Statystyki do dashboardu
   const stats = {
     tasks: tasks.length,
     defects: defects.filter(d => d.status === "zgłoszona").length,
     completed: tasks.filter(t => t.done).length,
     materials: materials.length,
   };
-
   const chartData = (() => {
     const days = {};
     defects.forEach(d => {
@@ -33,21 +116,30 @@ export default function App() {
     return Object.entries(days).map(([day, count]) => ({ day, count }));
   })();
 
+  // Wylogowanie
+  const handleLogout = () => {
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    setLoggedIn(false);
+    setUser("");
+  };
+
+  if (!loggedIn) return <LoginScreen onLogin={name => { setUser(name); setLoggedIn(true); }} />;
+
   return (
     <div className="flex min-h-screen bg-blue-50">
-      <Sidebar current={tab} setTab={setTab} />
+      <Sidebar current={tab} setTab={setTab} onLogout={handleLogout} />
       <main className="flex-1 flex flex-col">
         <Header title={{
           dashboard: "Panel Główny",
           tasks: "Zadania",
           defects: "Usterki",
           materials: "Materiały"
-        }[tab]} />
+        }[tab]} user={user} />
         {tab === "dashboard" && <Dashboard stats={stats} chartData={chartData} />}
-        {/* {tab === "tasks" && <TaskList data={tasks} />} */}
-        {/* {tab === "defects" && <DefectList data={defects} />} */}
-        {/* {tab === "materials" && <MaterialList data={materials} />} */}
-        {/* ... */}
+        {tab === "tasks" && <TaskList data={tasks} onToggle={handleToggleTask} onRemark={handleRemarkTask} onAssign={handleAssignTask} />}
+        {tab === "defects" && <DefectList data={defects} onStatus={handleStatusDefect} />}
+        {tab === "materials" && <MaterialList data={materials} onRemove={handleRemoveMaterial} />}
       </main>
     </div>
   );
