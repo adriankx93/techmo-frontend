@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
-import Sidebar from "./components/Sidebar";
-import Header from "./components/Header";
-import Dashboard from "./components/Dashboard";
-import TaskList from "./components/TaskList";
-import DefectList from "./components/DefectList";
-import MaterialList from "./components/MaterialList";
+import Sidebar from "./components/Sidebar.jsx";
+import Header from "./components/Header.jsx";
+import Dashboard from "./components/Dashboard.jsx";
+import TaskList from "./components/TaskList.jsx";
+import DefectList from "./components/DefectList.jsx";
+import MaterialList from "./components/MaterialList.jsx";
 import { apiGet, apiPost, apiPut, apiDelete } from "./api";
 
 function LoginScreen({ onLogin }) {
