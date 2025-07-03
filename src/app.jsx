@@ -1,14 +1,37 @@
 import React, { useState, useEffect } from "react";
 import { apiGet, apiPost, apiPut, apiDelete } from "./api";
+import { Wrench, PackageSearch, Bell, BarChart2 } from "lucide-react";
+
+const cards = [
+  {
+    title: "Otwarte usterki",
+    icon: <Wrench size={38} className="text-red-500" />,
+    stat: (data) => data.defects.filter(d => d.status === "zgłoszona").length,
+    bg: "bg-red-50",
+    footer: "Kliknij by zobaczyć szczegóły"
+  },
+  {
+    title: "Braki materiałów",
+    icon: <PackageSearch size={38} className="text-blue-500" />,
+    stat: (data) => data.materials.length,
+    bg: "bg-blue-50",
+    footer: "Lista do zakupu"
+  },
+  {
+    title: "Nowe zgłoszenia",
+    icon: <Bell size={38} className="text-yellow-500" />,
+    stat: (data) => data.defects.filter(d => d.status === "zgłoszona" && d.priority === "wysoki").length,
+    bg: "bg-yellow-50",
+    footer: "Priorytet wysokie"
+  }
+];
 
 export default function App() {
-  const [tab, setTab] = useState("zadania");
+  const [tab, setTab] = useState("dashboard");
   const [tasks, setTasks] = useState([]);
   const [defects, setDefects] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [logs, setLogs] = useState([]);
-  const [newTask, setNewTask] = useState({ desc: "", type: "dzienna", assignedTo: "" });
-  const [newDefect, setNewDefect] = useState({ desc: "", priority: "średni", location: "", reportedBy: "" });
 
   useEffect(() => {
     apiGet("/tasks").then(setTasks);
@@ -17,149 +40,133 @@ export default function App() {
     apiGet("/logs").then(setLogs);
   }, [tab]);
 
-  async function addTask() {
-    await apiPost("/tasks", { ...newTask, user: "Admin" });
-    setNewTask({ desc: "", type: "dzienna", assignedTo: "" });
-    apiGet("/tasks").then(setTasks);
-  }
-  async function updateTask(id, data) {
-    await apiPut(`/tasks/${id}`, { ...tasks.find(t => t.id === id), ...data, user: "Admin" });
-    apiGet("/tasks").then(setTasks);
-  }
-
-  async function addMaterial(name) {
-    await apiPost("/materials", { name, user: "Admin" });
-    apiGet("/materials").then(setMaterials);
-  }
-  async function removeMaterial(id) {
-    await apiDelete(`/materials/${id}`);
-    apiGet("/materials").then(setMaterials);
-  }
-
-  async function addDefect() {
-    await apiPost("/defects", { ...newDefect, reportedBy: "Admin" });
-    setNewDefect({ desc: "", priority: "średni", location: "" });
-    apiGet("/defects").then(setDefects);
-  }
-  async function updateDefect(id, data) {
-    await apiPut(`/defects/${id}`, { ...defects.find(d => d.id === id), ...data, user: "Admin" });
-    apiGet("/defects").then(setDefects);
-  }
+  // Przykładowy prosty wykres: liczba usterek dziennie
+  const chartData = (() => {
+    const days = {};
+    defects.forEach(d => {
+      const day = (d.timestamp || d.id).toString().slice(0, 10);
+      days[day] = (days[day] || 0) + 1;
+    });
+    return Object.entries(days).map(([day, count]) => ({ day, count }));
+  })();
 
   return (
-    <div style={{ fontFamily: "sans-serif", maxWidth: 900, margin: "auto" }}>
-      <h1 style={{ textAlign: "center" }}>Panel Technika Biurowca</h1>
-      <nav style={{ display: "flex", gap: 10, justifyContent: "center", margin: 20 }}>
-        <button onClick={() => setTab("zadania")}>Zadania</button>
-        <button onClick={() => setTab("materialy")}>Braki materiałów</button>
-        <button onClick={() => setTab("usterki")}>Usterki</button>
-        <button onClick={() => setTab("logs")}>Logi</button>
-      </nav>
-      {tab === "zadania" && (
-        <div>
-          <h2>Zadania</h2>
-          <div>
-            <input placeholder="Opis zadania"
-              value={newTask.desc}
-              onChange={e => setNewTask(t => ({ ...t, desc: e.target.value }))}
-            />
-            <select
-              value={newTask.type}
-              onChange={e => setNewTask(t => ({ ...t, type: e.target.value }))}
-            >
-              <option value="dzienna">Dzienna</option>
-              <option value="nocna">Nocna</option>
-            </select>
-            <button onClick={addTask}>Dodaj</button>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white pb-12">
+      {/* HEADER */}
+      <header className="flex items-center gap-4 bg-white shadow px-8 py-4">
+        <img src="https://images.unsplash.com/photo-1464983953574-0892a716854b?auto=format&fit=facearea&w=48&h=48" className="rounded-full border border-blue-200 shadow" />
+        <h1 className="text-2xl font-bold text-blue-900">Techmo CMMS Panel</h1>
+        <nav className="flex gap-6 ml-8">
+          <button className={tab === "dashboard" ? "font-bold text-blue-700" : "text-gray-500"} onClick={() => setTab("dashboard")}>Dashboard</button>
+          <button className={tab === "usterki" ? "font-bold text-blue-700" : "text-gray-500"} onClick={() => setTab("usterki")}>Usterki</button>
+          <button className={tab === "materialy" ? "font-bold text-blue-700" : "text-gray-500"} onClick={() => setTab("materialy")}>Materiały</button>
+          <button className={tab === "zadania" ? "font-bold text-blue-700" : "text-gray-500"} onClick={() => setTab("zadania")}>Zadania</button>
+          <button className={tab === "logs" ? "font-bold text-blue-700" : "text-gray-500"} onClick={() => setTab("logs")}>Logi</button>
+        </nav>
+      </header>
+
+      {/* DASHBOARD */}
+      {tab === "dashboard" &&
+        <div className="max-w-6xl mx-auto mt-8 px-4">
+          <div className="grid md:grid-cols-3 gap-6">
+            {cards.map((card, i) =>
+              <div key={i} className={`rounded-2xl shadow-md p-6 ${card.bg} flex flex-col items-center`}>
+                {card.icon}
+                <div className="text-3xl font-bold mt-3">{card.stat({ defects, materials })}</div>
+                <div className="font-semibold text-gray-700 mt-2">{card.title}</div>
+                <div className="text-gray-400 text-xs mt-2">{card.footer}</div>
+              </div>
+            )}
           </div>
-          <ul>
-            {tasks.map(t => (
-              <li key={t.id} style={{ margin: 10, background: "#f7f7f7", padding: 10, borderRadius: 8 }}>
-                <input type="checkbox" checked={!!t.done} onChange={() => updateTask(t.id, { done: !t.done })} />
-                <b style={{ marginLeft: 8 }}>{t.desc}</b>
-                <div>
-                  Uwagi: <input
-                    value={t.remark || ""}
-                    onChange={e => updateTask(t.id, { remark: e.target.value })}
-                  />
-                </div>
-                <div>
-                  Brakujący materiał: <input
-                    value={t.missing || ""}
-                    onChange={e => {
-                      updateTask(t.id, { missing: e.target.value });
-                      if (e.target.value) addMaterial(e.target.value);
-                    }}
-                  />
-                </div>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {tab === "materialy" && (
-        <div>
-          <h2>Braki materiałów</h2>
-          <ul>
-            {materials.map(m => (
-              <li key={m.id} style={{ margin: 5 }}>
-                {m.name} <button onClick={() => removeMaterial(m.id)}>Usuń</button>
-              </li>
-            ))}
-          </ul>
-        </div>
-      )}
-      {tab === "usterki" && (
-        <div>
-          <h2>Usterki</h2>
-          <div>
-            <input placeholder="Opis usterki"
-              value={newDefect.desc}
-              onChange={e => setNewDefect(d => ({ ...d, desc: e.target.value }))}
-            />
-            <select
-              value={newDefect.priority}
-              onChange={e => setNewDefect(d => ({ ...d, priority: e.target.value }))}
-            >
-              <option value="niski">Niski</option>
-              <option value="średni">Średni</option>
-              <option value="wysoki">Wysoki</option>
-            </select>
-            <button onClick={addDefect}>Zgłoś</button>
+
+          {/* Wykres */}
+          <div className="mt-10 p-6 bg-white rounded-xl shadow">
+            <div className="font-bold mb-2 flex items-center gap-2"><BarChart2 className="text-blue-400" /> Usterki w czasie</div>
+            <div className="w-full h-64">
+              <svg width="100%" height="100%">
+                {chartData.map((item, idx) =>
+                  <rect key={item.day} x={idx * 40 + 40} y={200 - item.count * 10} width="30" height={item.count * 10} fill="#60a5fa" />
+                )}
+                {/* Oś X */}
+                {chartData.map((item, idx) =>
+                  <text key={item.day} x={idx * 40 + 55} y={215} fontSize="12" textAnchor="middle">{item.day.slice(-5)}</text>
+                )}
+              </svg>
+            </div>
           </div>
+
+          {/* Ilustracja */}
+          <div className="flex justify-center mt-12">
+            <img alt="maintenance" src="https://undraw.co/api/illustrations/9f97beac-c004-405b-9a80-7ca4de2201e7" className="w-96 rounded-2xl shadow" />
+          </div>
+        </div>
+      }
+
+      {/* USTERKI */}
+      {tab === "usterki" &&
+        <div className="max-w-2xl mx-auto mt-10 bg-white p-8 rounded-2xl shadow">
+          <h2 className="font-bold text-xl text-blue-800 mb-4">Lista usterek</h2>
           <ul>
             {defects.map(d => (
-              <li key={d.id} style={{ margin: 10, background: "#f7f7f7", padding: 10, borderRadius: 8 }}>
-                <b>{d.desc}</b> <span>({d.priority})</span>
-                <span style={{
-                  background: d.status === "zgłoszona" ? "#ffe48b" : "#b8ffc5",
-                  padding: "2px 8px",
-                  borderRadius: 6,
-                  marginLeft: 10
-                }}>{d.status}</span>
-                {d.status === "zgłoszona" &&
-                  <button style={{ marginLeft: 8 }}
-                    onClick={() => updateDefect(d.id, { status: "usunięta" })}>
-                    Oznacz jako usuniętą
-                  </button>
-                }
+              <li key={d.id} className="flex gap-4 items-center p-4 border-b last:border-b-0">
+                <Wrench className="text-red-400" />
+                <div>
+                  <div className="font-semibold">{d.desc}</div>
+                  <div className="text-xs text-gray-500">{d.priority} • {d.status}</div>
+                </div>
+                <span className={"ml-auto rounded-lg px-2 py-1 text-xs " + (d.status === "zgłoszona" ? "bg-yellow-100 text-yellow-700" : "bg-green-100 text-green-700")}>
+                  {d.status}
+                </span>
               </li>
             ))}
           </ul>
         </div>
-      )}
-      {tab === "logs" && (
-        <div>
-          <h2>Logi</h2>
+      }
+
+      {/* MATERIAŁY */}
+      {tab === "materialy" &&
+        <div className="max-w-lg mx-auto mt-10 bg-white p-8 rounded-2xl shadow">
+          <h2 className="font-bold text-xl text-blue-800 mb-4">Braki materiałów</h2>
           <ul>
-            {logs.map(log =>
-              <li key={log.id}>
-                {log.timestamp}: <b>{log.user}</b> – {log.action}
+            {materials.map(m => (
+              <li key={m.id} className="flex items-center justify-between py-2">
+                <div className="flex gap-2 items-center">
+                  <PackageSearch className="text-blue-400" /> <span>{m.name}</span>
+                </div>
+                <button className="text-xs text-red-500 underline" onClick={() => { apiDelete(`/materials/${m.id}`); setMaterials(materials.filter(x => x.id !== m.id)); }}>Usuń</button>
               </li>
+            ))}
+          </ul>
+        </div>
+      }
+
+      {/* ZADANIA */}
+      {tab === "zadania" &&
+        <div className="max-w-2xl mx-auto mt-10 bg-white p-8 rounded-2xl shadow">
+          <h2 className="font-bold text-xl text-blue-800 mb-4">Zadania zmiany</h2>
+          <ul>
+            {tasks.map(t => (
+              <li key={t.id} className="flex gap-2 items-center p-2 border-b last:border-b-0">
+                <input type="checkbox" checked={!!t.done} onChange={() => { apiPut(`/tasks/${t.id}`, { ...t, done: !t.done }); setTasks(tasks.map(x => x.id === t.id ? { ...x, done: !x.done } : x)); }} />
+                <span className="font-semibold">{t.desc}</span>
+                <span className="ml-auto text-xs text-gray-400">{t.type}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      }
+
+      {/* LOGI */}
+      {tab === "logs" &&
+        <div className="max-w-2xl mx-auto mt-10 bg-white p-8 rounded-2xl shadow">
+          <h2 className="font-bold text-xl text-blue-800 mb-4">Logi operacji</h2>
+          <ul className="text-xs text-gray-600 max-h-80 overflow-auto">
+            {logs.map(log =>
+              <li key={log.id} className="border-b last:border-b-0 py-1">{log.timestamp}: <b>{log.user}</b> – {log.action}</li>
             )}
           </ul>
         </div>
-      )}
+      }
     </div>
   );
 }
