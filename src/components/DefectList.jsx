@@ -1,80 +1,72 @@
 import { useState } from "react";
-import { Wrench, Trash2, Plus } from "lucide-react";
+import { Wrench, Trash2, Plus, Archive } from "lucide-react";
 
 export default function DefectList({ data, onStatus, onAdd, onDelete, onArchive }) {
-  const [newDef, setNewDef] = useState({ desc: "", priority: "średni", location: "" });
+  const [newDefect, setNewDefect] = useState({ desc: "", priority: "średni", location: "" });
 
   return (
-    <div className="p-8">
-      <div className="flex justify-between items-center mb-4">
-        <div className="text-2xl font-bold">Usterki</div>
-        <button
-          className="bg-yellow-600 hover:bg-yellow-700 text-white rounded-xl px-4 py-2 flex items-center gap-2 shadow"
+    <div className="bg-white rounded-2xl shadow-xl p-8 border border-blue-100">
+      <div className="flex justify-between items-center mb-6">
+        <div className="text-2xl font-bold text-blue-900">Lista usterek</div>
+        <button className="bg-yellow-500 hover:bg-yellow-600 text-white rounded-xl px-4 py-2 flex items-center gap-2 shadow"
           onClick={() => {
-            if (!newDef.desc || !newDef.location) return;
-            onAdd(newDef);
-            setNewDef({ desc: "", priority: "średni", location: "" });
+            if (!newDefect.desc || !newDefect.location) return;
+            onAdd(newDefect);
+            setNewDefect({ desc: "", priority: "średni", location: "" });
           }}>
-          <Plus /> Dodaj usterkę
+          <Plus /> Zgłoś usterkę
         </button>
       </div>
-      <div className="flex gap-2 mb-6">
-        <input
-          className="border rounded p-2 w-2/5"
-          placeholder="Opis usterki"
-          value={newDef.desc}
-          onChange={e => setNewDef(d => ({ ...d, desc: e.target.value }))}
-        />
-        <select
-          className="border rounded p-2"
-          value={newDef.priority}
-          onChange={e => setNewDef(d => ({ ...d, priority: e.target.value }))}
-        >
+      <div className="flex gap-2 mb-6 flex-wrap">
+        <input className="border rounded-xl p-3 flex-1 min-w-[140px]" placeholder="Opis"
+          value={newDefect.desc} onChange={e => setNewDefect(d => ({ ...d, desc: e.target.value }))} />
+        <select className="border rounded-xl p-3"
+          value={newDefect.priority}
+          onChange={e => setNewDefect(d => ({ ...d, priority: e.target.value }))}>
           <option value="niski">Niski</option>
           <option value="średni">Średni</option>
           <option value="wysoki">Wysoki</option>
         </select>
-        <input
-          className="border rounded p-2 w-1/3"
-          placeholder="Lokalizacja"
-          value={newDef.location}
-          onChange={e => setNewDef(d => ({ ...d, location: e.target.value }))}
-        />
+        <input className="border rounded-xl p-3 flex-1 min-w-[100px]" placeholder="Lokalizacja"
+          value={newDefect.location} onChange={e => setNewDefect(d => ({ ...d, location: e.target.value }))} />
       </div>
-      <table className="w-full bg-white rounded-xl shadow overflow-hidden">
-        <thead className="bg-blue-50">
+      <table className="w-full text-sm text-gray-700">
+        <thead>
           <tr>
-            <th className="py-3 px-2">Opis</th>
-            <th className="py-3 px-2">Priorytet</th>
-            <th className="py-3 px-2">Lokalizacja</th>
-            <th className="py-3 px-2">Status</th>
-            <th className="py-3 px-2">Usuń</th>
+            <th className="py-2">Opis</th>
+            <th className="py-2">Status</th>
+            <th className="py-2">Priorytet</th>
+            <th className="py-2">Lokalizacja</th>
+            <th className="py-2">Akcje</th>
+            <th className="py-2">Archiwizuj</th>
           </tr>
         </thead>
         <tbody>
           {data.map(d => (
-            <tr key={d.id} className="border-b last:border-b-0 hover:bg-yellow-50/40">
-              <td className="px-2">{d.desc}</td>
-              <td className="px-2">{d.priority}</td>
-              <td className="px-2">{d.location}</td>
-              <td className="px-2">
-                <select
-                  className="border rounded px-2 py-1 text-xs"
+            <tr key={d.id} className={`border-b last:border-b-0 hover:bg-yellow-50/30 ${d.status === "usunięta" ? "bg-green-50/60" : ""}`}>
+              <td className="py-2">{d.desc}</td>
+              <td className="py-2">
+                <select className="border rounded p-1"
                   value={d.status}
-                  onChange={e => {
-                    onStatus(d.id, e.target.value);
-                    if (e.target.value === "usunięta") onArchive(d.id);
-                  }}
-                >
+                  onChange={e => onStatus(d.id, e.target.value)}>
                   <option value="zgłoszona">Zgłoszona</option>
                   <option value="w trakcie">W trakcie</option>
                   <option value="usunięta">Usunięta</option>
                 </select>
               </td>
-              <td className="px-2">
+              <td className="py-2">{d.priority}</td>
+              <td className="py-2">{d.location}</td>
+              <td className="py-2 flex gap-1 justify-center">
                 <button onClick={() => onDelete(d.id)}>
                   <Trash2 className="text-red-400 hover:text-red-700" />
                 </button>
+              </td>
+              <td className="py-2 text-center">
+                {d.status === "usunięta" && (
+                  <button title="Przenieś do archiwum" onClick={() => onArchive(d.id)}>
+                    <Archive className="text-gray-500 hover:text-yellow-700" />
+                  </button>
+                )}
               </td>
             </tr>
           ))}
