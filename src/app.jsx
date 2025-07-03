@@ -3,7 +3,7 @@ import Sidebar from "./components/Sidebar.jsx";
 import Header from "./components/Header.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import TaskList from "./components/TaskList.jsx";
-import DefectList from "./components/DefecList.jsx";
+import DefectList from "./components/DefectList.jsx"; // UWAGA: popraw nazwę pliku jeśli trzeba!
 import MaterialList from "./components/MaterialList.jsx";
 import { apiGet, apiPost, apiPut, apiDelete } from "./api";
 
@@ -95,7 +95,6 @@ export default function App() {
     apiPut(`/tasks/${id}`, { ...tasks.find(t => t.id === id), date });
   };
   const handleAddTask = async (task) => {
-    // Zakładamy id po stronie frontu, można dorobić po stronie backendu
     const newTask = { ...task, id: Date.now() };
     setTasks([...tasks, newTask]);
     await apiPost("/tasks", newTask);
@@ -105,11 +104,21 @@ export default function App() {
     await apiDelete(`/tasks/${id}`);
   };
 
+  // NOWOŚĆ: Handlery do usterek (dodawanie, usuwanie)
   const handleStatusDefect = async (id, status) => {
     await apiPut(`/defects/${id}`, { ...defects.find(d => d.id === id), status });
     setDefects(defects.map(d => d.id === id ? { ...d, status } : d));
   };
+  const handleAddDefect = async (defect) => {
+    setDefects(defs => [...defs, defect]);
+    await apiPost("/defects", defect);
+  };
+  const handleDeleteDefect = async id => {
+    setDefects(defs => defs.filter(d => d.id !== id));
+    await apiDelete(`/defects/${id}`);
+  };
 
+  // Materiały
   const handleAddMaterial = async (mat) => {
     const newMat = { ...mat, id: Date.now() };
     setMaterials([...materials, newMat]);
@@ -120,11 +129,11 @@ export default function App() {
     setMaterials(materials.filter(m => m.id !== id));
   };
   const handleStatusMaterial = (id, status) => {
-  setMaterials(materials =>
-    materials.map(m => m.id === id ? { ...m, status } : m)
-  );
-  // Możesz dodać apiPut(`/materials/${id}`, { ...materials.find(m => m.id === id), status });
-};
+    setMaterials(materials =>
+      materials.map(m => m.id === id ? { ...m, status } : m)
+    );
+    // Możesz dodać apiPut(`/materials/${id}`, { ...materials.find(m => m.id === id), status });
+  };
 
   // Statystyki do dashboardu
   const stats = {
@@ -174,7 +183,14 @@ export default function App() {
             onDate={handleDateTask}
           />
         )}
-        {tab === "defects" && <DefectList data={defects} onStatus={handleStatusDefect} />}
+        {tab === "defects" && (
+          <DefectList
+            data={defects}
+            onStatus={handleStatusDefect}
+            onAdd={handleAddDefect}
+            onDelete={handleDeleteDefect}
+          />
+        )}
         {tab === "materials" && (
           <MaterialList
             data={materials}
