@@ -1,41 +1,68 @@
-import { BarChart2, AlertCircle, ClipboardList, PackageSearch } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ClipboardList, Wrench, Package, CheckCircle2 } from "lucide-react";
 
-export default function Dashboard({ stats, chartData }) {
+// Prosta funkcja pobierania pogody z Open-Meteo (brak klucza potrzebny)
+async function getWeather() {
+  // Warszawa: 52.2297, 21.0122
+  const url = "https://api.open-meteo.com/v1/forecast?latitude=52.2297&longitude=21.0122&current_weather=true";
+  const res = await fetch(url);
+  const data = await res.json();
+  const w = data.current_weather;
+  return {
+    temp: w?.temperature ?? "--",
+    desc: w?.weathercode === 0 ? "Słonecznie" : w?.weathercode === 3 ? "Pochmurno" : "Zmiennie"
+  };
+}
+
+export default function Dashboard({ stats, chartData, setTab }) {
+  const [weather, setWeather] = useState({ temp: "--", desc: "Ładowanie..." });
+  const [date, setDate] = useState(new Date());
+
+  useEffect(() => {
+    getWeather().then(setWeather);
+    const interval = setInterval(() => setDate(new Date()), 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
-    <div className="p-8">
-      <div className="grid md:grid-cols-4 gap-6 mb-10">
-        <div className="bg-white rounded-xl shadow p-5 flex flex-col items-center">
-          <BarChart2 size={36} className="text-blue-400" />
-          <div className="font-bold text-3xl">{stats.tasks}</div>
-          <div className="text-gray-500">Zadania</div>
+    <div className="p-8 flex flex-col gap-8">
+      <div className="flex items-center justify-between">
+        <div className="text-xl text-blue-900 font-bold">
+          {date.toLocaleDateString("pl-PL", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
         </div>
-        <div className="bg-white rounded-xl shadow p-5 flex flex-col items-center">
-          <AlertCircle size={36} className="text-red-400" />
-          <div className="font-bold text-3xl">{stats.defects}</div>
-          <div className="text-gray-500">Usterki otwarte</div>
-        </div>
-        <div className="bg-white rounded-xl shadow p-5 flex flex-col items-center">
-          <ClipboardList size={36} className="text-green-500" />
-          <div className="font-bold text-3xl">{stats.completed}</div>
-          <div className="text-gray-500">Wykonane</div>
-        </div>
-        <div className="bg-white rounded-xl shadow p-5 flex flex-col items-center">
-          <PackageSearch size={36} className="text-yellow-500" />
-          <div className="font-bold text-3xl">{stats.materials}</div>
-          <div className="text-gray-500">Braki materiałów</div>
+        <div className="flex items-center gap-3 bg-blue-100 px-5 py-2 rounded-xl">
+          <span className="font-semibold text-blue-900">Warszawa</span>
+          <span className="text-2xl font-bold">{weather.temp}°C</span>
+          <span className="italic text-blue-700">{weather.desc}</span>
         </div>
       </div>
-      <div className="bg-white rounded-xl shadow p-6">
-        <div className="font-bold mb-2">Historia usterek (dziennie)</div>
-        <svg width="100%" height="160">
-          {chartData.map((item, idx) =>
-            <rect key={item.day} x={idx * 50 + 50} y={130 - item.count * 10} width="35" height={item.count * 10} fill="#60a5fa" />
-          )}
-          {chartData.map((item, idx) =>
-            <text key={item.day} x={idx * 50 + 67} y={150} fontSize="12" textAnchor="middle">{item.day.slice(-5)}</text>
-          )}
-        </svg>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        <button className="rounded-2xl bg-blue-600 text-white p-6 shadow flex flex-col items-center hover:scale-105 transition"
+          onClick={() => setTab("tasks")}>
+          <ClipboardList size={38} />
+          <div className="mt-2 text-xl font-bold">{stats.tasks}</div>
+          <div className="text-sm">Zadania</div>
+        </button>
+        <button className="rounded-2xl bg-yellow-500 text-white p-6 shadow flex flex-col items-center hover:scale-105 transition"
+          onClick={() => setTab("defects")}>
+          <Wrench size={38} />
+          <div className="mt-2 text-xl font-bold">{stats.defects}</div>
+          <div className="text-sm">Usterki</div>
+        </button>
+        <button className="rounded-2xl bg-green-600 text-white p-6 shadow flex flex-col items-center hover:scale-105 transition"
+          onClick={() => setTab("materials")}>
+          <Package size={38} />
+          <div className="mt-2 text-xl font-bold">{stats.materials}</div>
+          <div className="text-sm">Materiały</div>
+        </button>
+        <button className="rounded-2xl bg-blue-400 text-white p-6 shadow flex flex-col items-center hover:scale-105 transition"
+          onClick={() => setTab("tasks")}>
+          <CheckCircle2 size={38} />
+          <div className="mt-2 text-xl font-bold">{stats.completed}</div>
+          <div className="text-sm">Wykonane</div>
+        </button>
       </div>
+      {/* Możesz tu dołożyć wykres lub inne widgety */}
     </div>
   );
 }
