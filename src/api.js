@@ -1,4 +1,5 @@
-export const API = "https://biurowiec.onrender.com"; // <-- ZMIEŃ na link backendu po deployu!
+export const API_URL = "https://techmo.onrender.com";
+ // <-- ZMIEŃ na link backendu po deployu!
 
 export async function apiGet(path) {
   const r = await fetch(API + path);
