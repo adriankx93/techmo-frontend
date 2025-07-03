@@ -3,7 +3,7 @@ import Sidebar from "./components/Sidebar.jsx";
 import Header from "./components/Header.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import TaskList from "./components/TaskList.jsx";
-import DefectList from "./components/DefecList.jsx";
+import DefectList from "./components/DefectList.jsx";
 import MaterialList from "./components/MaterialList.jsx";
 import { apiGet, apiPost, apiPut, apiDelete } from "./api";
 
@@ -16,7 +16,6 @@ function LoginScreen({ onLogin }) {
     e.preventDefault();
     setErr(null);
     try {
-      // Przykład: /login zwraca {token, user: {name}}
       const res = await apiPost("/login", { username, password });
       if (res.token) {
         localStorage.setItem("token", res.token);
@@ -91,9 +90,30 @@ export default function App() {
     setTasks(tasks.map(t => t.id === id ? { ...t, assignedTo } : t));
     apiPut(`/tasks/${id}`, { ...tasks.find(t => t.id === id), assignedTo });
   };
+  const handleDateTask = (id, date) => {
+    setTasks(tasks.map(t => t.id === id ? { ...t, date } : t));
+    apiPut(`/tasks/${id}`, { ...tasks.find(t => t.id === id), date });
+  };
+  const handleAddTask = async (task) => {
+    // Zakładamy id po stronie frontu, można dorobić po stronie backendu
+    const newTask = { ...task, id: Date.now() };
+    setTasks([...tasks, newTask]);
+    await apiPost("/tasks", newTask);
+  };
+  const handleDeleteTask = async (id) => {
+    setTasks(tasks.filter(t => t.id !== id));
+    await apiDelete(`/tasks/${id}`);
+  };
+
   const handleStatusDefect = async (id, status) => {
     await apiPut(`/defects/${id}`, { ...defects.find(d => d.id === id), status });
     setDefects(defects.map(d => d.id === id ? { ...d, status } : d));
+  };
+
+  const handleAddMaterial = async (mat) => {
+    const newMat = { ...mat, id: Date.now() };
+    setMaterials([...materials, newMat]);
+    await apiPost("/materials", newMat);
   };
   const handleRemoveMaterial = async id => {
     await apiDelete(`/materials/${id}`);
@@ -137,12 +157,26 @@ export default function App() {
           materials: "Materiały"
         }[tab]} user={user} />
         {tab === "dashboard" && <Dashboard stats={stats} chartData={chartData} />}
-        {tab === "tasks" && <TaskList data={tasks} onToggle={handleToggleTask} onRemark={handleRemarkTask} onAssign={handleAssignTask} />}
+        {tab === "tasks" && (
+          <TaskList
+            data={tasks}
+            onToggle={handleToggleTask}
+            onRemark={handleRemarkTask}
+            onAssign={handleAssignTask}
+            onDelete={handleDeleteTask}
+            onAdd={handleAddTask}
+            onDate={handleDateTask}
+          />
+        )}
         {tab === "defects" && <DefectList data={defects} onStatus={handleStatusDefect} />}
-        {tab === "materials" && <MaterialList data={materials} onRemove={handleRemoveMaterial} />}
+        {tab === "materials" && (
+          <MaterialList
+            data={materials}
+            onAdd={handleAddMaterial}
+            onRemove={handleRemoveMaterial}
+          />
+        )}
       </main>
     </div>
   );
 }
-
-
