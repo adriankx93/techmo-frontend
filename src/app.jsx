@@ -144,3 +144,28 @@ export default function App() {
     </div>
   );
 }
+export default function App() {
+  return (
+    <div className="min-h-screen flex bg-blue-50">
+      <aside className="bg-blue-900 text-white w-64 p-6">
+        <div className="font-bold text-2xl mb-8">CMMS Panel</div>
+        <ul className="space-y-4">
+          <li>Dashboard</li>
+          <li>Zadania</li>
+          <li>Usterki</li>
+        </ul>
+      </aside>
+      <main className="flex-1 flex flex-col">
+        <header className="bg-white shadow p-6 text-blue-900 text-xl font-bold">
+          Nagłówek
+        </header>
+        <section className="flex-1 p-8">
+          <div className="bg-white shadow rounded-xl p-8">
+            <h2 className="text-2xl font-semibold mb-4">Tu będą Twoje dane!</h2>
+            <p>Jeśli widzisz wyraźne karty i kolory – Tailwind działa OK.</p>
+          </div>
+        </section>
+      </main>
+    </div>
+  );
+}
