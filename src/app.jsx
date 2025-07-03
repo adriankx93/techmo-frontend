@@ -3,7 +3,7 @@ import Sidebar from "./components/Sidebar.jsx";
 import Header from "./components/Header.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import TaskList from "./components/TaskList.jsx";
-import DefectList from "./components/DefectList.jsx"; // UWAGA: popraw nazwę pliku jeśli trzeba!
+import DefectList from "./components/DefecList.jsx"; // UWAGA: popraw nazwę pliku jeśli trzeba!
 import MaterialList from "./components/MaterialList.jsx";
 import { apiGet, apiPost, apiPut, apiDelete } from "./api";
 
