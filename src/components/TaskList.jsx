@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { CheckCircle2, Circle, Trash2, User2, Plus } from "lucide-react";
 
-export default function TaskList({ data, onToggle, onRemark, onAssign, onDelete, onAdd, onDate }) {
+export default function TaskList({ data, onToggle, onRemark, onAssign, onDelete, onAdd, onDate, onArchive }) {
   const [newTask, setNewTask] = useState({ desc: "", type: "dzienna", remark: "", assignedTo: "", date: "" });
 
   return (
     <div className="p-8">
-      <div className="flex flex-col md:flex-row justify-between items-center mb-4 gap-4">
+      <div className="flex justify-between items-center mb-4">
         <div className="text-2xl font-bold">Zadania zmiany dziennej i nocnej</div>
         <button
           className="bg-blue-700 hover:bg-blue-800 text-white rounded-xl px-4 py-2 flex items-center gap-2 shadow"
@@ -18,9 +18,9 @@ export default function TaskList({ data, onToggle, onRemark, onAssign, onDelete,
           <Plus /> Dodaj zadanie
         </button>
       </div>
-      <div className="flex flex-wrap gap-2 mb-6">
+      <div className="flex gap-2 mb-6">
         <input
-          className="border rounded p-2 w-full md:w-2/5"
+          className="border rounded p-2 w-2/5"
           placeholder="Opis zadania"
           value={newTask.desc}
           onChange={e => setNewTask(t => ({ ...t, desc: e.target.value }))}
@@ -40,88 +40,85 @@ export default function TaskList({ data, onToggle, onRemark, onAssign, onDelete,
           onChange={e => setNewTask(t => ({ ...t, date: e.target.value }))}
         />
         <input
-          className="border rounded p-2 w-full md:w-1/5"
+          className="border rounded p-2 w-1/5"
           placeholder="Przypisany"
           value={newTask.assignedTo}
           onChange={e => setNewTask(t => ({ ...t, assignedTo: e.target.value }))}
         />
         <textarea
-          className="border rounded p-2 w-full md:w-1/4 h-20 resize-y"
+          className="border rounded p-2 w-1/4"
           placeholder="Uwagi"
           value={newTask.remark}
           onChange={e => setNewTask(t => ({ ...t, remark: e.target.value }))}
         />
       </div>
-      <div className="overflow-x-auto">
-        <table className="w-full bg-white rounded-xl shadow overflow-hidden">
-          <thead className="bg-blue-50">
-            <tr>
-              <th className="py-3 px-2">Status</th>
-              <th className="py-3 px-2">Opis</th>
-              <th className="py-3 px-2">Typ</th>
-              <th className="py-3 px-2">Data</th>
-              <th className="py-3 px-2">Uwagi</th>
-              <th className="py-3 px-2">Przypisany</th>
-              <th className="py-3 px-2">Usuń</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map(t => (
-              <tr
-                key={t.id}
-                className={`border-b last:border-b-0 hover:bg-blue-50/40 transition
-                  ${t.done ? "bg-green-200" : ""}`}
-              >
-                <td className="px-2 py-3 text-center">
-                  <button onClick={() => onToggle(t.id)} title="Oznacz jako wykonane">
-                    {t.done
-                      ? <CheckCircle2 className="text-green-500" />
-                      : <Circle className="text-gray-300" />}
+      <table className="w-full bg-white rounded-xl shadow overflow-hidden">
+        <thead className="bg-blue-50">
+          <tr>
+            <th className="py-3 px-2">Status</th>
+            <th className="py-3 px-2">Opis</th>
+            <th className="py-3 px-2">Typ</th>
+            <th className="py-3 px-2">Data</th>
+            <th className="py-3 px-2">Uwagi</th>
+            <th className="py-3 px-2">Przypisany</th>
+            <th className="py-3 px-2">Usuń</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.map(t => (
+            <tr key={t.id} className={`border-b last:border-b-0 hover:bg-blue-50/40 ${t.done ? "bg-green-100" : ""}`}>
+              <td className="px-2 py-3">
+                <button onClick={() => onToggle(t.id)}>
+                  {t.done ? <CheckCircle2 className="text-green-500" /> : <Circle className="text-gray-300" />}
+                </button>
+                {t.done && (
+                  <button className="ml-2 text-xs text-blue-700 underline" onClick={() => onArchive(t.id)}>
+                    Archiwizuj
                   </button>
-                </td>
-                <td className="px-2">{t.desc}</td>
-                <td className="px-2">
-                  <span className={`px-2 py-1 rounded-full text-xs font-semibold ${t.type === "dzienna" ? "bg-blue-100 text-blue-700" : "bg-yellow-100 text-yellow-700"}`}>
-                    {t.type}
-                  </span>
-                </td>
-                <td className="px-2">
+                )}
+              </td>
+              <td className="px-2">{t.desc}</td>
+              <td className="px-2">
+                <span className={`px-2 py-1 rounded-full text-xs font-semibold ${t.type === "dzienna" ? "bg-blue-100 text-blue-700" : "bg-yellow-100 text-yellow-700"}`}>
+                  {t.type}
+                </span>
+              </td>
+              <td className="px-2">
+                <input
+                  type="date"
+                  className="border rounded px-2 py-1 text-xs"
+                  value={t.date || ""}
+                  onChange={e => onDate(t.id, e.target.value)}
+                />
+              </td>
+              <td className="px-2">
+                <textarea
+                  className="border rounded px-2 py-1 text-xs w-32 h-14 resize-y"
+                  placeholder="Uwagi"
+                  value={t.remark || ""}
+                  onChange={e => onRemark(t.id, e.target.value)}
+                />
+              </td>
+              <td className="px-2">
+                <div className="flex items-center gap-2">
+                  <User2 className="text-gray-400" size={16} />
                   <input
-                    type="date"
                     className="border rounded px-2 py-1 text-xs"
-                    value={t.date || ""}
-                    onChange={e => onDate(t.id, e.target.value)}
+                    placeholder="Imię"
+                    value={t.assignedTo || ""}
+                    onChange={e => onAssign(t.id, e.target.value)}
                   />
-                </td>
-                <td className="px-2">
-                  <textarea
-                    className="border rounded px-2 py-1 text-xs w-52 h-20 resize-y"
-                    placeholder="Uwagi"
-                    value={t.remark || ""}
-                    onChange={e => onRemark(t.id, e.target.value)}
-                  />
-                </td>
-                <td className="px-2">
-                  <div className="flex items-center gap-2">
-                    <User2 className="text-gray-400" size={16} />
-                    <input
-                      className="border rounded px-2 py-1 text-xs"
-                      placeholder="Imię"
-                      value={t.assignedTo || ""}
-                      onChange={e => onAssign(t.id, e.target.value)}
-                    />
-                  </div>
-                </td>
-                <td className="px-2 text-center">
-                  <button onClick={() => onDelete(t.id)}>
-                    <Trash2 className="text-red-400 hover:text-red-700" />
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                </div>
+              </td>
+              <td className="px-2">
+                <button onClick={() => onDelete(t.id)}>
+                  <Trash2 className="text-red-400 hover:text-red-700" />
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 }
