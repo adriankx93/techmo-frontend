@@ -3,7 +3,7 @@ import Sidebar from "./components/Sidebar.jsx";
 import Header from "./components/Header.jsx";
 import Dashboard from "./components/Dashboard.jsx";
 import TaskList from "./components/TaskList.jsx";
-import DefectList from "./components/DefecList.jsx";
+import DefectList from "./components/DefectList.jsx"; // <--- poprawione!
 import MaterialList from "./components/MaterialList.jsx";
 import ArchiveList from "./components/ArchiveList.jsx";
 import { apiGet, apiPost, apiPut, apiDelete } from "./api";
@@ -126,9 +126,8 @@ export default function App() {
 
   const chartData = (() => {
     const days = {};
-    defect
-s.forEach(d => {
-      const day = new Date(d.id).toISOString().slice(0,10);
+    defects.forEach(d => {
+      const day = new Date(d.id).toISOString().slice(0, 10);
       days[day] = (days[day] || 0) + 1;
     });
     return Object.entries(days).map(([day, count]) => ({ day, count }));
@@ -154,7 +153,7 @@ s.forEach(d => {
           archive: "Archiwum"
         }[tab]} user={user} />
         {tab === "dashboard" &&
-          <Dashboard stats={stats} chartData={chartData} mostTasksUser={tasks.reduce((a,c)=>(a[c.assignedTo] = (a[c.assignedTo]||0)+1, a), {})}/>}
+          <Dashboard stats={stats} chartData={chartData} mostTasksUser={tasks.reduce((a, c) => (a[c.assignedTo] = (a[c.assignedTo] || 0) + 1, a), {})} />}
         {tab === "tasks" && <TaskList data={tasks} onToggle={handleToggleTask} onRemark={handleRemarkTask}
           onAssign={handleAssignTask} onDelete={handleDeleteTask} onAdd={handleAddTask} onDate={handleDateTask} />}
         {tab === "defects" && <DefectList data={defects} onStatus={handleStatusDefect}
