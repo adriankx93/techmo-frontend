@@ -1,64 +1,55 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+import { ClipboardList, Wrench, Package, LogOut, Archive as ArchiveIcon, Warehouse, Calendar } from "lucide-react";
+import { motion } from "framer-motion";
 
-body {
-  @apply bg-gradient-to-br from-blue-100 to-blue-300 min-h-screen font-sans;
-}
+const menu = [
+  { tab: "dashboard", label: "Dashboard", icon: <ClipboardList /> },
+  { tab: "tasks", label: "Zadania", icon: <ClipboardList /> },
+  { tab: "defects", label: "Usterki", icon: <Wrench /> },
+  { tab: "materials", label: "Materiały", icon: <Package /> },
+  { tab: "store", label: "Magazyn", icon: <Warehouse /> },
+  { tab: "archive", label: "Archiwum", icon: <ArchiveIcon /> },
+  { tab: "grafik", label: "Grafik", icon: <Calendar /> },
+];
 
-.glass {
-    background: rgba(255,255,255,0.32);
-  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.13);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.22);
-}
-
-.glass:hover {
-  background: rgba(255,255,255,0.45);
-  box-shadow: 0 12px 36px 0 rgba(31,38,135,0.17);
-}
-
-/* Ikony pogody do Dashboard */
-.sun {
-  display: inline-block;
-  width: 26px; height: 26px;
-  border-radius: 50%;
-  background: radial-gradient(ellipse at center, #ffd600 60%, #fff20040 100%);
-  box-shadow: 0 0 15px 2px #ffe45088;
-  margin-right: 4px;
-  animation: sunPulse 2s infinite alternate;
-}
-@keyframes sunPulse {
-  from { box-shadow: 0 0 8px 0 #ffe45099; }
-  to { box-shadow: 0 0 18px 2px #ffd60066; }
-}
-.cloud {
-  display: inline-block;
-  width: 26px; height: 18px;
-  background: linear-gradient(120deg, #b2c3e5 60%, #f0f4fa 100%);
-  border-radius: 30% 30% 60% 60% / 60% 60% 40% 40%;
-  margin-right: 4px;
-  box-shadow: 0 0 14px #a0aec050;
-  position: relative;
-}
-.cloud:after {
-  content: '';
-  display: block;
-  position: absolute;
-  left: 8px; top: 8px;
-  width: 14px; height: 10px;
-  background: #e4ecfa;
-  border-radius: 50%;
-  opacity: 0.6;
-}
-
-::-webkit-scrollbar {
-  width: 9px;
-  background: rgba(210, 230, 255, 0.15);
-}
-::-webkit-scrollbar-thumb {
-  background: rgba(30, 64, 175, 0.08);
-  border-radius: 10px;
+export default function Sidebar({ current, setTab, onLogout }) {
+  return (
+    <motion.aside
+      className="glass bg-gradient-to-br from-slate-200/90 via-slate-300/90 to-slate-400/90
+      text-blue-900 w-72 flex flex-col min-h-screen shadow-2xl border-r border-glass"
+      initial={{ x: -30, opacity: 0 }}
+      animate={{ x: 0, opacity: 1 }}
+    >
+      <div className="flex items-center justify-center py-7 mb-4 border-b border-slate-300">
+        <img src="https://cdn-icons-png.flaticon.com/512/2421/2421040.png" alt="logo" className="w-10 h-10 mr-3" />
+        <span className="font-extrabold text-2xl tracking-wide">Tech<span className="text-blue-500">MO</span></span>
+      </div>
+      <nav className="flex-1 mt-2">
+        <ul className="space-y-3 px-6">
+          {menu.map(({ tab, label, icon }) => (
+            <li key={tab}>
+              <button
+                className={`w-full flex items-center gap-3 px-5 py-3 rounded-2xl text-lg font-medium transition
+                  border-2 border-transparent shadow-sm hover:border-blue-300 hover:shadow-md
+                  ${
+                    current === tab
+                      ? "bg-blue-500 text-white shadow-lg scale-105 border-blue-500"
+                      : "bg-white/70 text-blue-900 hover:bg-blue-100/70"
+                  }`}
+                onClick={() => setTab(tab)}
+              >
+                <span className={current === tab ? "text-white" : "text-blue-500"}>{icon}</span>
+                <span>{label}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      </nav>
+      <motion.button whileTap={{ scale: 0.98 }}
+        className="bg-gradient-to-r from-red-500 to-red-600 hover:from-red-600 hover:to-red-700 w-11/12 mx-auto mb-8 p-3 text-center rounded-2xl font-semibold text-white transition mt-8 flex items-center justify-center gap-2 shadow"
+        onClick={onLogout}
+      >
+        <LogOut className="inline" /> Wyloguj
+      </motion.button>
+    </motion.aside>
+  );
 }
