@@ -11,7 +11,7 @@ import StoreList from "./components/StoreList.jsx";
 import { apiGet, apiPost, apiPut, apiDelete } from "./api";
 
 export default function App() {
-  // Uproszczone: brak logowania, domyślny użytkownik
+  // Brak logowania, domyślny użytkownik
   const [user] = useState("Gość");
   const [tab, setTab] = useState("dashboard");
   const [tasks, setTasks] = useState([]);
@@ -29,7 +29,7 @@ export default function App() {
     apiGet("/store").then(setStore);
   }, []);
 
-  // Handlery i logika z poprzedniej wersji...
+  // Zadania
   const handleToggleTask = async id => {
     const t = tasks.find(t => t.id === id);
     if (!t.done) {
@@ -60,6 +60,7 @@ export default function App() {
     await apiDelete(`/tasks/${id}`);
   };
 
+  // Usterki
   const handleStatusDefect = async (id, status) => {
     const d = defects.find(x => x.id === id);
     await apiPut(`/defects/${id}`, { ...d, status });
@@ -79,6 +80,7 @@ export default function App() {
     await apiDelete(`/defects/${id}`);
   };
 
+  // Materiały
   const handleAddMaterial = async (mat) => {
     const newMat = { ...mat, id: Date.now(), status: "na stanie" };
     setMaterials(ms => [...ms, newMat]);
@@ -94,6 +96,27 @@ export default function App() {
     setMaterials(ms => ms.map(m => m.id === id ? { ...m, status } : m));
   };
 
+  // Magazyn
+  const handleAddStore = (item) => {
+    const id = Date.now();
+    setStore(s => [...s, { ...item, id }]);
+    apiPost("/store", { ...item, id });
+  };
+  const handleEditStore = (item) => {
+    setStore(s => s.map(m => m.id === item.id ? item : m));
+    apiPut(`/store/${item.id}`, item);
+  };
+  const handleRemoveStore = (id) => {
+    setStore(s => s.filter(m => m.id !== id));
+    apiDelete(`/store/${id}`);
+  };
+  const handleChangeStoreQty = (id, diff) => {
+    setStore(s => s.map(m => m.id === id ? { ...m, qty: Math.max(0, m.qty + diff) } : m));
+    const item = store.find(m => m.id === id);
+    if (item) apiPut(`/store/${id}`, { ...item, qty: Math.max(0, item.qty + diff) });
+  };
+
+  // Archiwum/przywracanie
   const handleRestore = (type, id) => {
     if (type === "task") {
       const t = archivedTasks.find(x => x.id === id);
@@ -112,6 +135,7 @@ export default function App() {
     }
   };
 
+  // Statystyki do dashboardu
   const stats = {
     tasks: tasks.length,
     defects: defects.filter(d => d.status === "zgłoszona").length,
@@ -120,6 +144,7 @@ export default function App() {
     store: store.length
   };
 
+  // Dla wykresu (jeśli używasz)
   const chartData = (() => {
     const days = {};
     defects.forEach(d => {
@@ -129,13 +154,9 @@ export default function App() {
     return Object.entries(days).map(([day, count]) => ({ day, count }));
   })();
 
-  const handleLogout = () => {
-    // bez logowania – wyczyść tylko dane jeśli chcesz
-  };
-
   return (
     <div className="flex min-h-screen bg-gradient-to-br from-blue-100 to-slate-300">
-      <Sidebar current={tab} setTab={setTab} onLogout={handleLogout} />
+      <Sidebar current={tab} setTab={setTab} onLogout={() => {}} />
       <main className="flex-1 flex flex-col md:p-8 p-2 glass" style={{ minHeight: "100vh" }}>
         <Header title={{
           dashboard: "Panel Główny",
@@ -162,7 +183,14 @@ export default function App() {
           onAdd={handleAddDefect} onDelete={handleDeleteDefect} />}
         {tab === "materials" && <MaterialList data={materials} onAdd={handleAddMaterial}
           onRemove={handleRemoveMaterial} onStatus={handleStatusMaterial} />}
-        {tab === "store" && <StoreList data={store} />}
+        {tab === "store" &&
+          <StoreList
+            data={store}
+            onAdd={handleAddStore}
+            onEdit={handleEditStore}
+            onRemove={handleRemoveStore}
+            onChangeQty={handleChangeStoreQty}
+          />}
         {tab === "archive" && <ArchiveList archivedTasks={archivedTasks} archivedDefects={archivedDefects}
           archivedMaterials={archivedMaterials} onRestore={handleRestore} />}
         {tab === "grafik" && <Grafik />}
