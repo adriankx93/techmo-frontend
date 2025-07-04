@@ -1,4 +1,14 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-body { background: #f8fafc; }
+body {
+  @apply bg-gradient-to-br from-blue-100 to-blue-300 min-h-screen;
+  font-family: 'Inter', sans-serif;
+}
+
+/* Klasa dla tła glassmorphism */
+.glass {
+  background: rgba(255,255,255,0.35);
+  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,0.25);
+}
