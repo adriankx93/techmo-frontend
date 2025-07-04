@@ -1,117 +1,113 @@
 import React, { useEffect, useState } from "react";
 
-// URL do eksportu CSV z Google Sheets
+// Link do CSV z Google Sheets
 const CSV_URL =
   "https://docs.google.com/spreadsheets/d/1gduTrxhu4I7Z8CKcBtxmia3_4-7GopgM/export?format=csv&id=1gduTrxhu4I7Z8CKcBtxmia3_4-7GopgM&gid=770254744";
 
-// Funkcja parsująca CSV (prosta wersja, bez zagnieżdżonych przecinków)
+// Funkcja do parsowania CSV
 function parseCSV(csv) {
-  const [headerLine, ...lines] = csv.split("\n").map(l => l.replace(/\r/g, ""));
-  const headers = headerLine.split(",");
-  const data = lines
-    .filter(Boolean)
-    .map(line => {
-      // Obsługa przecinków w cudzysłowie
-      const row = [];
-      let val = "", inside = false;
-      for (let i = 0; i < line.length; i++) {
-        const ch = line[i];
-        if (ch === '"') inside = !inside;
-        else if (ch === "," && !inside) {
-          row.push(val);
-          val = "";
-        } else {
-          val += ch;
-        }
-      }
-      row.push(val);
-      return row;
-    });
-  return { headers, data };
+  const lines = csv.split("\n").map(line => line.replace(/\r/g, "")).filter(Boolean);
+  const headers = lines[0].split(",");
+  const rows = lines.slice(1).map(l => l.split(","));
+  return { headers, rows };
+}
+
+// Zwraca true jeśli string to data w formacie "1.07.2024", "2.07.2024" itd.
+function isDayCol(str) {
+  return /^\d{1,2}\.\d{2}\.\d{4}$/.test(str.trim());
+}
+
+function getCurrentMonthYear() {
+  const now = new Date();
+  const m = (now.getMonth() + 1).toString().padStart(2, "0");
+  return { month: m, year: now.getFullYear() };
 }
 
 export default function Grafik() {
-  const [rows, setRows] = useState([]);
-  const [headers, setHeaders] = useState([]);
-  const [filter, setFilter] = useState("");
-  const [sort, setSort] = useState({ key: null, asc: true });
   const [loading, setLoading] = useState(true);
+  const [dayHeaders, setDayHeaders] = useState([]);
+  const [people, setPeople] = useState([]);
+  const [grafik, setGrafik] = useState([]);
 
   useEffect(() => {
     setLoading(true);
     fetch(CSV_URL)
       .then(r => r.text())
       .then(csv => {
-        const { headers, data } = parseCSV(csv);
-        setHeaders(headers);
-        setRows(data);
+        const { headers, rows } = parseCSV(csv);
+        // Szukamy kolumn z dniami bieżącego miesiąca:
+        const { month, year } = getCurrentMonthYear();
+        const dayIdx = headers
+          .map((h, i) =>
+            isDayCol(h) && h.split(".")[1] === month && h.split(".")[2] === String(year)
+              ? i
+              : null
+          )
+          .filter(i => i !== null);
+
+        // Dla uproszczenia: przyjmujemy że pierwszy wiersz to nagłówki ("Imię", "Nazwisko", "Stanowisko", ...dni)
+        const imieIdx = headers.findIndex(h => /imie|imię/i.test(h));
+        const nazwIdx = headers.findIndex(h => /nazw/i.test(h));
+        const peopleList = rows.map(row => ({
+          name: row[imieIdx] + " " + (row[nazwIdx] || ""),
+          data: dayIdx.map(i => row[i] || "")
+        }));
+
+        setDayHeaders(dayIdx.map(i => headers[i]));
+        setPeople(peopleList.map(p => p.name));
+        setGrafik(peopleList.map(p => p.data));
         setLoading(false);
       });
   }, []);
 
-  function handleSort(idx) {
-    setSort(s => ({
-      key: idx,
-      asc: s.key === idx ? !s.asc : true
-    }));
-  }
-
-  let filtered = rows.filter(
-    row => row.join(" ").toLowerCase().includes(filter.toLowerCase())
-  );
-  if (sort.key !== null) {
-    filtered = [...filtered].sort((a, b) => {
-      if ((a[sort.key] || "") > (b[sort.key] || "")) return sort.asc ? 1 : -1;
-      if ((a[sort.key] || "") < (b[sort.key] || "")) return sort.asc ? -1 : 1;
-      return 0;
-    });
-  }
-
   return (
-    <div className="p-6 max-w-5xl mx-auto">
-      <div className="mb-4 flex flex-col md:flex-row items-center gap-3">
-        <span className="font-bold text-blue-900">
-          Grafik techników (aktualny miesiąc)
-        </span>
-        {!loading && (
-          <input
-            className="glass border px-3 py-2 rounded ml-auto"
-            placeholder="Filtruj (imię, dzień, itp.)"
-            value={filter}
-            onChange={e => setFilter(e.target.value)}
-          />
-        )}
-      </div>
-      {loading && <div className="glass p-8 rounded-2xl text-blue-800 text-center">Ładowanie grafiku…</div>}
-      {!loading && (
-        <div className="overflow-x-auto mt-6 rounded-2xl shadow">
-          <table className="min-w-full glass bg-white text-center">
+    <div className="max-w-6xl mx-auto mt-7">
+      <div className="font-bold text-blue-900 mb-5 text-xl text-center">Grafik techników – {new Date().toLocaleString('pl-PL', { month: 'long', year: 'numeric' })}</div>
+      {loading ? (
+        <div className="glass p-10 rounded-2xl text-blue-700 text-center shadow-lg">Ładowanie grafiku…</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-separate border-spacing-0 shadow-lg rounded-2xl glass text-center">
             <thead>
               <tr>
-                {headers.map((h, i) => (
-                  <th
-                    key={i}
-                    className="px-2 py-2 bg-blue-100 font-semibold text-blue-900 cursor-pointer select-none"
-                    onClick={() => handleSort(i)}
-                  >
-                    {h}
-                    {sort.key === i ? (sort.asc ? " ▲" : " ▼") : ""}
+                <th className="sticky left-0 bg-blue-50/80 font-semibold px-3 py-2 text-blue-900 z-10">Technik</th>
+                {dayHeaders.map((d, i) => (
+                  <th key={i} className="px-2 py-2 bg-blue-50 font-semibold text-blue-900">
+                    {parseInt(d)} {/* dzień miesiąca */}
                   </th>
                 ))}
               </tr>
             </thead>
             <tbody>
-              {filtered.map((row, r) => (
-                <tr key={r} className="hover:bg-blue-50 transition">
-                  {headers.map((_, c) => (
-                    <td key={c} className="px-2 py-2 text-slate-700">{row[c]}</td>
+              {people.map((person, rIdx) => (
+                <tr key={person}>
+                  <td className="sticky left-0 bg-blue-50/80 font-semibold px-3 py-2 text-blue-800 z-10 border-r border-blue-200">{person}</td>
+                  {grafik[rIdx].map((val, cIdx) => (
+                    <td key={cIdx} className="px-2 py-1">
+                      {val.trim() ? (
+                        <span
+                          className={
+                            "inline-block min-w-[60px] px-2 py-1 rounded-xl font-medium " +
+                            (val.toLowerCase().includes("dzień") ? "bg-yellow-200 text-yellow-800" :
+                              val.toLowerCase().includes("noc") ? "bg-indigo-300 text-indigo-900" :
+                              val.toLowerCase().includes("urlop") ? "bg-pink-200 text-pink-800" :
+                              val.toLowerCase().includes("wolne") ? "bg-gray-200 text-gray-700" :
+                              "bg-blue-100 text-blue-900")
+                          }
+                        >
+                          {val}
+                        </span>
+                      ) : (
+                        <span className="text-slate-300">—</span>
+                      )}
+                    </td>
                   ))}
                 </tr>
               ))}
             </tbody>
           </table>
-          <div className="text-xs text-slate-400 mt-2">
-            Kliknij nagłówek kolumny by sortować, wpisz tekst by filtrować. Dane z Google Sheets.
+          <div className="text-xs text-slate-400 mt-2 text-center">
+            Podświetlenie: dzień (żółty), nocka (niebieski), urlop (różowy), wolne (szary).
           </div>
         </div>
       )}
