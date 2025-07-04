@@ -7,13 +7,12 @@ body {
 }
 
 .glass {
-  background: rgba(255,255,255,0.35);
+    background: rgba(255,255,255,0.32);
   box-shadow: 0 8px 32px 0 rgba(31,38,135,0.13);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 18px;
-  border: 1px solid rgba(255,255,255,0.25);
-  transition: background 0.2s, box-shadow 0.2s;
+  border: 1px solid rgba(255,255,255,0.22);
 }
 
 .glass:hover {
