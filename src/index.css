@@ -1,14 +1,65 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body {
-  @apply bg-gradient-to-br from-blue-100 to-blue-300 min-h-screen;
-  font-family: 'Inter', sans-serif;
+  @apply bg-gradient-to-br from-blue-100 to-blue-300 min-h-screen font-sans;
 }
 
-/* Klasa dla tła glassmorphism */
 .glass {
   background: rgba(255,255,255,0.35);
-  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.15);
+  box-shadow: 0 8px 32px 0 rgba(31,38,135,0.13);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-radius: 18px;
   border: 1px solid rgba(255,255,255,0.25);
+  transition: background 0.2s, box-shadow 0.2s;
+}
+
+.glass:hover {
+  background: rgba(255,255,255,0.45);
+  box-shadow: 0 12px 36px 0 rgba(31,38,135,0.17);
+}
+
+/* Ikony pogody do Dashboard */
+.sun {
+  display: inline-block;
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, #ffd600 60%, #fff20040 100%);
+  box-shadow: 0 0 15px 2px #ffe45088;
+  margin-right: 4px;
+  animation: sunPulse 2s infinite alternate;
+}
+@keyframes sunPulse {
+  from { box-shadow: 0 0 8px 0 #ffe45099; }
+  to { box-shadow: 0 0 18px 2px #ffd60066; }
+}
+.cloud {
+  display: inline-block;
+  width: 26px; height: 18px;
+  background: linear-gradient(120deg, #b2c3e5 60%, #f0f4fa 100%);
+  border-radius: 30% 30% 60% 60% / 60% 60% 40% 40%;
+  margin-right: 4px;
+  box-shadow: 0 0 14px #a0aec050;
+  position: relative;
+}
+.cloud:after {
+  content: '';
+  display: block;
+  position: absolute;
+  left: 8px; top: 8px;
+  width: 14px; height: 10px;
+  background: #e4ecfa;
+  border-radius: 50%;
+  opacity: 0.6;
+}
+
+::-webkit-scrollbar {
+  width: 9px;
+  background: rgba(210, 230, 255, 0.15);
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(30, 64, 175, 0.08);
+  border-radius: 10px;
 }
