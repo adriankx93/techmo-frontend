@@ -1,0 +1,68 @@
+// src/components/ZgloszenieXLSGenerator.jsx
+import { useState } from "react";
+import axios from "axios";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
+export default function ZgloszenieXLSGenerator() {
+  const [url, setUrl] = useState("");
+  const [status, setStatus] = useState("");
+
+  async function handleGenerate() {
+    setStatus("Pobieram dane...");
+    try {
+      // 1. Pobierz dane zgłoszenia
+      const response = await axios.get(url);
+      const html = response.data;
+      // UWAGA! Poniższy kod wymaga dopasowania pod Twoje dane:
+      const inc = /INC[\s:]*([A-Z0-9]+)/i.exec(html)?.[1] || "";
+      const opc = /OPC[\s:]*([a-z0-9]+)/i.exec(html)?.[1] || "";
+      const termin = /Termin realizacji[\s:]*([0-9.\-\/]+)/i.exec(html)?.[1] || "";
+      const opis = /Opis zgłoszenia[\s:]*([\s\S]+?)(?=<|$)/i.exec(html)?.[1]?.trim() || "";
+      const dataZgloszenia = /Data zgłoszenia[\s:]*([0-9.\-\/]+)/i.exec(html)?.[1] || "";
+
+      setStatus("Pobieram szablon XLS...");
+      // 2. Pobierz szablon XLS
+      const xlsResponse = await axios.get("/Remeda.xls", { responseType: "arraybuffer" });
+      const workbook = XLSX.read(xlsResponse.data, { type: "buffer" });
+      const ws = workbook.Sheets[workbook.SheetNames[0]];
+
+      // 3. Wpisz dane do wybranych pól (ZALEŻY OD SZABLONU, dopasuj kolumny!)
+      XLSX.utils.sheet_add_aoa(ws, [
+        [inc],         // A1: Numer INC
+        [opc],         // A2: Numer OPC
+        [opis],        // A3: Opis zgłoszenia
+        [dataZgloszenia], // A4: Data zgłoszenia
+        [termin]       // A5: Termin realizacji
+      ], { origin: "A1" });
+
+      // 4. Zapisz i pobierz gotowy plik
+      const outXls = XLSX.write(workbook, { type: "array", bookType: "xlsx" });
+      saveAs(new Blob([outXls], { type: "application/octet-stream" }), `zgloszenie_${opc || inc}.xlsx`);
+      setStatus("Plik XLS wygenerowany!");
+    } catch (e) {
+      setStatus("Błąd: " + e.message);
+    }
+  }
+
+  return (
+    <div className="glass max-w-xl mx-auto p-6 rounded-2xl shadow-xl my-8">
+      <div className="font-bold mb-2">Wygeneruj XLS na podstawie zgłoszenia</div>
+      <input
+        className="border w-full rounded p-2 mb-2"
+        placeholder="Wklej link do zgłoszenia"
+        value={url}
+        onChange={e => setUrl(e.target.value)}
+      />
+      <button
+        className="bg-blue-700 hover:bg-blue-900 text-white px-4 py-2 rounded mb-2"
+        onClick={handleGenerate}
+        disabled={!url}
+      >
+        Generuj plik XLS
+      </button>
+      <div className="text-blue-900 text-sm">{status}</div>
+      <div className="text-xs text-gray-600 mt-2">* Pobrany plik będzie miał wypełnione odpowiednie pola szablonu</div>
+    </div>
+  );
+}
