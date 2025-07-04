@@ -1,95 +1,120 @@
-import { useState } from "react";
-import { Plus, Edit, Trash, AlertCircle } from "lucide-react";
+import React, { useState } from "react";
 
 export default function StoreList({ data, onAdd, onEdit, onRemove, onChangeQty }) {
-  const [modal, setModal] = useState(false);
-  const [form, setForm] = useState({ name: "", qty: 0, min: 1, location: "" });
-
-  const lowStock = data.filter(item => item.qty <= item.min);
+  const [newItem, setNewItem] = useState({
+    name: "",
+    qty: "",
+    unit: "",
+    type: "",
+    desc: ""
+  });
 
   return (
-    <div className="p-4">
-      <div className="flex items-center mb-4">
-        <h2 className="text-xl font-bold text-blue-900">Stan magazynowy</h2>
-        <button className="ml-auto bg-blue-700 text-white rounded px-4 py-2 flex items-center gap-1 hover:bg-blue-800"
-          onClick={() => setModal(true)}>
-          <Plus size={18} /> Dodaj materiał
-        </button>
+    <div>
+      <div className="mb-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+        <form
+          className="glass p-4 rounded-xl flex flex-col gap-2 shadow border"
+          onSubmit={e => {
+            e.preventDefault();
+            if (!newItem.name || !newItem.qty || !newItem.unit) return;
+            onAdd({ ...newItem, qty: Number(newItem.qty) });
+            setNewItem({ name: "", qty: "", unit: "", type: "", desc: "" });
+          }}
+        >
+          <div className="font-bold text-blue-900 mb-1">Dodaj materiał do magazynu</div>
+          <input
+            className="input px-3 py-2 rounded border outline-blue-400"
+            placeholder="Nazwa materiału"
+            value={newItem.name}
+            onChange={e => setNewItem(v => ({ ...v, name: e.target.value }))}
+            required
+          />
+          <div className="flex gap-2">
+            <input
+              className="input px-3 py-2 rounded border outline-blue-400 w-1/2"
+              type="number"
+              placeholder="Stan (ilość)"
+              value={newItem.qty}
+              onChange={e => setNewItem(v => ({ ...v, qty: e.target.value }))}
+              min="0"
+              required
+            />
+            <input
+              className="input px-3 py-2 rounded border outline-blue-400 w-1/2"
+              placeholder="Jednostka (np. szt, m, l)"
+              value={newItem.unit}
+              onChange={e => setNewItem(v => ({ ...v, unit: e.target.value }))}
+              required
+            />
+          </div>
+          <input
+            className="input px-3 py-2 rounded border outline-blue-400"
+            placeholder="Typ/kategoria (opcjonalnie)"
+            value={newItem.type}
+            onChange={e => setNewItem(v => ({ ...v, type: e.target.value }))}
+          />
+          <input
+            className="input px-3 py-2 rounded border outline-blue-400"
+            placeholder="Opis (opcjonalnie)"
+            value={newItem.desc}
+            onChange={e => setNewItem(v => ({ ...v, desc: e.target.value }))}
+          />
+          <button
+            type="submit"
+            className="bg-blue-600 text-white rounded-xl px-4 py-2 font-bold hover:bg-blue-700 mt-2 transition"
+          >
+            Dodaj materiał
+          </button>
+        </form>
       </div>
-      {lowStock.length > 0 && (
-        <div className="mb-4 bg-yellow-100 text-yellow-800 p-2 rounded flex items-center gap-2">
-          <AlertCircle size={18}/> Alert! Braki magazynowe:
-          {lowStock.map(m => (
-            <span key={m.id} className="font-bold">{m.name} ({m.qty} szt.)</span>
-          ))}
-        </div>
-      )}
-      <table className="w-full bg-white shadow-glass glass rounded-2xl overflow-hidden">
-        <thead>
-          <tr className="bg-blue-50 text-blue-900">
-            <th className="p-2">Nazwa</th>
-            <th>Stan</th>
-            <th>Min.</th>
-            <th>Lokalizacja</th>
-            <th>+</th>
-            <th>-</th>
-            <th>Edytuj</th>
-            <th>Usuń</th>
-          </tr>
-        </thead>
-        <tbody>
-          {data.map(m => (
-            <tr key={m.id} className={m.qty <= m.min ? "bg-yellow-50" : ""}>
-              <td className="p-2">{m.name}</td>
-              <td>{m.qty}</td>
-              <td>{m.min}</td>
-              <td>{m.location}</td>
-              <td>
-                <button className="bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200"
-                  onClick={() => onChangeQty(m.id, 1)}>+1</button>
-              </td>
-              <td>
-                <button className="bg-red-100 text-red-700 px-2 py-1 rounded hover:bg-red-200"
-                  onClick={() => onChangeQty(m.id, -1)} disabled={m.qty === 0}>-1</button>
-              </td>
-              <td>
-                <button className="bg-blue-100 text-blue-700 px-2 py-1 rounded hover:bg-blue-200"
-                  onClick={() => { setModal(true); setForm(m); }}><Edit size={16}/></button>
-              </td>
-              <td>
-                <button className="bg-gray-100 text-gray-700 px-2 py-1 rounded hover:bg-gray-200"
-                  onClick={() => onRemove(m.id)}><Trash size={16}/></button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      {modal && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black/30 z-50">
-          <div className="bg-white p-6 rounded-xl shadow-xl min-w-[340px] glass">
-            <h3 className="font-bold text-lg mb-4">{form.id ? "Edytuj materiał" : "Dodaj nowy materiał"}</h3>
-            <input className="w-full border rounded px-3 py-2 mb-2" placeholder="Nazwa"
-              value={form.name} onChange={e => setForm(f => ({ ...f, name: e.target.value }))} />
-            <input className="w-full border rounded px-3 py-2 mb-2" type="number" placeholder="Stan początkowy"
-              value={form.qty} onChange={e => setForm(f => ({ ...f, qty: parseInt(e.target.value) || 0 }))} />
-            <input className="w-full border rounded px-3 py-2 mb-2" type="number" placeholder="Minimum"
-              value={form.min} onChange={e => setForm(f => ({ ...f, min: parseInt(e.target.value) || 0 }))} />
-            <input className="w-full border rounded px-3 py-2 mb-2" placeholder="Lokalizacja"
-              value={form.location} onChange={e => setForm(f => ({ ...f, location: e.target.value }))} />
-            <div className="flex gap-2 mt-2">
-              <button className="bg-blue-700 hover:bg-blue-800 text-white px-4 py-2 rounded"
-                onClick={() => {
-                  form.id ? onEdit(form) : onAdd(form);
-                  setModal(false);
-                  setForm({ name: "", qty: 0, min: 1, location: "" });
-                }}>
-                {form.id ? "Zapisz" : "Dodaj"}
-              </button>
-              <button className="bg-gray-200 px-4 py-2 rounded" onClick={() => { setModal(false); setForm({ name: "", qty: 0, min: 1, location: "" }); }}>Anuluj</button>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+        {data.length === 0 && (
+          <div className="text-gray-500 col-span-full">Brak materiałów w magazynie.</div>
+        )}
+        {data.map(item => (
+          <div key={item.id} className="glass p-5 rounded-2xl shadow flex flex-col gap-2 border">
+            <div className="flex items-center justify-between mb-1">
+              <span className="font-bold text-lg text-blue-900">{item.name}</span>
+              <button
+                className="bg-red-100 text-red-600 px-3 py-1 rounded-lg hover:bg-red-200 text-sm"
+                onClick={() => onRemove(item.id)}
+                title="Usuń z magazynu"
+              >Usuń</button>
+            </div>
+            <div className="grid grid-cols-2 gap-2 text-slate-800">
+              <div>
+                <div className="text-xs text-gray-500">Stan</div>
+                <div className="font-semibold text-base flex items-center gap-2">
+                  {item.qty}
+                  <span className="text-xs text-gray-600">{item.unit}</span>
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">Typ</div>
+                <div className="text-base">{item.type || <span className="text-gray-400">—</span>}</div>
+              </div>
+              <div className="col-span-2">
+                <div className="text-xs text-gray-500">Opis</div>
+                <div className="text-base">{item.desc || <span className="text-gray-400">—</span>}</div>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-3">
+              <button
+                className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-200 text-sm"
+                onClick={() => onChangeQty(item.id, 1)}
+                title="Dodaj 1"
+              >+1</button>
+              <button
+                className="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg hover:bg-blue-200 text-sm"
+                onClick={() => onChangeQty(item.id, -1)}
+                disabled={item.qty <= 0}
+                title="Zabierz 1"
+              >-1</button>
             </div>
           </div>
-        </div>
-      )}
+        ))}
+      </div>
     </div>
   );
 }
