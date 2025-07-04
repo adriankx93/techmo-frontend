@@ -11,10 +11,7 @@
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "lucide-react": "^0.367.0",
-    "framer-motion": "^11.0.0"
-      "xlsx": "^0.18.5",
-  "file-saver": "^2.0.5",
-  "axios": "^1.6.7"
+    "xlsx": "^0.18.5"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.0.0",
