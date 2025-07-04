@@ -1,5 +1,14 @@
 import React, { useState } from "react";
 
+const colWidths = [
+  "w-56", // Nazwa
+  "w-16", // Stan
+  "w-16", // Jednostka
+  "w-32", // Typ
+  "w-64", // Opis
+  "w-32", // Akcje
+];
+
 export default function StoreList({ data, onAdd, onEdit, onRemove, onChangeQty }) {
   const [filter, setFilter] = useState("");
   const [sort, setSort] = useState({ key: "name", asc: true });
@@ -92,15 +101,20 @@ export default function StoreList({ data, onAdd, onEdit, onRemove, onChangeQty }
       </form>
 
       <div className="overflow-x-auto rounded-2xl shadow">
-        <table className="min-w-full bg-white glass">
+        <table className="min-w-full glass table-fixed">
+          <colgroup>
+            {colWidths.map((w, i) => (
+              <col key={i} className={w} />
+            ))}
+          </colgroup>
           <thead>
             <tr>
-              <Th title="Nazwa" sortKey="name" sort={sort} onSort={handleSort} />
-              <Th title="Stan" sortKey="qty" sort={sort} onSort={handleSort} />
-              <Th title="Jednostka" sortKey="unit" sort={sort} onSort={handleSort} />
-              <Th title="Typ" sortKey="type" sort={sort} onSort={handleSort} />
-              <Th title="Opis" sortKey="desc" sort={sort} onSort={handleSort} />
-              <th className="px-2 py-2 text-center">Akcje</th>
+              <Th title="Nazwa" sortKey="name" sort={sort} onSort={handleSort} className={colWidths[0]} />
+              <Th title="Stan" sortKey="qty" sort={sort} onSort={handleSort} className={colWidths[1]+" text-center"} />
+              <Th title="Jednostka" sortKey="unit" sort={sort} onSort={handleSort} className={colWidths[2]+" text-center"} />
+              <Th title="Typ" sortKey="type" sort={sort} onSort={handleSort} className={colWidths[3]} />
+              <Th title="Opis" sortKey="desc" sort={sort} onSort={handleSort} className={colWidths[4]} />
+              <th className={colWidths[5]+" text-center"}>Akcje</th>
             </tr>
           </thead>
           <tbody>
@@ -113,12 +127,12 @@ export default function StoreList({ data, onAdd, onEdit, onRemove, onChangeQty }
             ) : (
               filtered.map(item => (
                 <tr key={item.id} className="hover:bg-blue-50 transition">
-                  <td className="px-2 py-2 font-semibold text-blue-900">{item.name}</td>
-                  <td className="px-2 py-2 text-center">{item.qty}</td>
-                  <td className="px-2 py-2 text-center">{item.unit}</td>
-                  <td className="px-2 py-2">{item.type}</td>
-                  <td className="px-2 py-2">{item.desc}</td>
-                  <td className="px-2 py-2 flex gap-1 justify-center">
+                  <td className={colWidths[0]+" font-semibold text-blue-900"}>{item.name}</td>
+                  <td className={colWidths[1]+" text-center"}>{item.qty}</td>
+                  <td className={colWidths[2]+" text-center"}>{item.unit}</td>
+                  <td className={colWidths[3]}>{item.type}</td>
+                  <td className={colWidths[4]}>{item.desc}</td>
+                  <td className={colWidths[5]+" flex gap-1 justify-center"}>
                     <button
                       className="bg-green-100 text-green-700 px-2 py-1 rounded hover:bg-green-200"
                       title="Dodaj 1"
@@ -146,10 +160,10 @@ export default function StoreList({ data, onAdd, onEdit, onRemove, onChangeQty }
   );
 }
 
-function Th({ title, sortKey, sort, onSort }) {
+function Th({ title, sortKey, sort, onSort, className }) {
   return (
     <th
-      className="px-2 py-2 text-left cursor-pointer select-none whitespace-nowrap"
+      className={`px-2 py-2 text-left cursor-pointer select-none whitespace-nowrap ${className || ""}`}
       onClick={() => onSort(sortKey)}
     >
       {title}
