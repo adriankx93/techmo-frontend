@@ -1,71 +1,66 @@
-import { ClipboardList, Wrench, Package, Archive } from "lucide-react";
-import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+// src/components/Sidebar.jsx
+import { ClipboardList, Wrench, Package, LogOut, Archive as ArchiveIcon, Warehouse, Calendar } from "lucide-react";
 
-export default function Dashboard({ stats, chartData, onGoto, mostTasksUser }) {
-  const [date, setDate] = useState(() => new Date().toLocaleDateString("pl-PL", { day: "2-digit", month: "2-digit", year: "numeric" }));
-  const [weather, setWeather] = useState(null);
-
-  useEffect(() => {
-    fetch("https://api.open-meteo.com/v1/forecast?latitude=52.23&longitude=21.01&current_weather=true")
-      .then(r => r.json())
-      .then(d => setWeather(d.current_weather));
-  }, []);
-
-  const weatherIcon = weather
-    ? weather.weathercode === 0
-      ? <span className="sun"></span>
-      : <span className="cloud"></span>
-    : <span className="animate-pulse text-slate-500">…</span>;
-
+export default function Sidebar({ current, setTab, onLogout }) {
   return (
-    <motion.div className="py-6 px-2 md:px-8" initial={{ opacity: 0, y: 32 }} animate={{ opacity: 1, y: 0 }}>
-      <div className="flex flex-wrap gap-6 mb-6 items-center">
-        <div className="text-2xl font-bold text-blue-900 drop-shadow">Panel główny</div>
-        <div className="ml-auto text-blue-800 font-bold flex gap-4 items-center">
-          <span>{date}</span>
-          <span className="flex gap-2 items-center">
-            {weatherIcon}
-            {weather ? (
-              <span>
-                {Math.round(weather.temperature)}°C{" "}
-                <span className="capitalize">{weather.weathercode === 0 ? "Słonecznie" : "Pochmurno"}</span>
-              </span>
-            ) : "Ładowanie pogody…"}
-          </span>
-        </div>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-7 my-7">
-        <DashboardCard icon={<ClipboardList size={22} />} title="Zadania" count={stats.tasks}
-          color="from-blue-600 to-blue-300" onClick={() => onGoto("tasks")} />
-        <DashboardCard icon={<Wrench size={22} />} title="Usterki" count={stats.defects}
-          color="from-yellow-500 to-yellow-300" onClick={() => onGoto("defects")} />
-        <DashboardCard icon={<Package size={22} />} title="Materiały" count={stats.materials}
-          color="from-purple-500 to-purple-300" onClick={() => onGoto("materials")} />
-        <DashboardCard icon={<Archive size={22} />} title="Archiwum" count={stats.completed}
-          color="from-gray-500 to-gray-300" onClick={() => onGoto("archive")} />
-      </div>
-      <div className="mt-6 mb-3 text-md font-semibold text-blue-700">
-        Najaktywniejszy pracownik:{" "}
-        <span className="font-bold text-blue-800 drop-shadow">
-          {Object.entries(mostTasksUser).sort((a, b) => b[1] - a[1])[0]?.[0] || "brak"}
-        </span>
-      </div>
-    </motion.div>
-  );
-}
-
-function DashboardCard({ icon, title, count, color, onClick }) {
-  return (
-    <motion.div
-      whileHover={{ scale: 1.05 }}
-      className={`glass p-6 rounded-2xl shadow-glass border border-glass flex flex-col items-center cursor-pointer select-none transition`}
-      style={{ background: `linear-gradient(120deg, var(--tw-gradient-stops))` }}
-      onClick={onClick}
-    >
-      <div className={`mb-2 text-xl`}>{icon}</div>
-      <div className="font-bold text-2xl text-slate-900">{count}</div>
-      <div className="text-slate-700 text-sm">{title}</div>
-    </motion.div>
+    <aside className="bg-gradient-to-tr from-blue-900 via-blue-800 to-blue-700 text-white w-64 flex flex-col min-h-screen shadow-2xl rounded-r-3xl">
+      <div className="font-bold text-2xl text-center py-8 tracking-widest select-none">Obsługa MO</div>
+      <nav className="flex-1">
+        <ul className="space-y-2 px-4">
+          <li>
+            <button className={`w-full flex items-center gap-2 px-4 py-3 rounded-xl transition font-semibold
+              ${current === "dashboard" ? "bg-blue-600/70 shadow-lg" : "hover:bg-blue-600/40"}`}
+              onClick={() => setTab("dashboard")}>
+              <ClipboardList /> Dashboard
+            </button>
+          </li>
+          <li>
+            <button className={`w-full flex items-center gap-2 px-4 py-3 rounded-xl transition font-semibold
+              ${current === "tasks" ? "bg-blue-600/70 shadow-lg" : "hover:bg-blue-600/40"}`}
+              onClick={() => setTab("tasks")}>
+              <ClipboardList /> Zadania
+            </button>
+          </li>
+          <li>
+            <button className={`w-full flex items-center gap-2 px-4 py-3 rounded-xl transition font-semibold
+              ${current === "defects" ? "bg-blue-600/70 shadow-lg" : "hover:bg-blue-600/40"}`}
+              onClick={() => setTab("defects")}>
+              <Wrench /> Usterki
+            </button>
+          </li>
+          <li>
+            <button className={`w-full flex items-center gap-2 px-4 py-3 rounded-xl transition font-semibold
+              ${current === "materials" ? "bg-blue-600/70 shadow-lg" : "hover:bg-blue-600/40"}`}
+              onClick={() => setTab("materials")}>
+              <Package /> Materiały
+            </button>
+          </li>
+          <li>
+            <button className={`w-full flex items-center gap-2 px-4 py-3 rounded-xl transition font-semibold
+              ${current === "store" ? "bg-blue-600/70 shadow-lg" : "hover:bg-blue-600/40"}`}
+              onClick={() => setTab("store")}>
+              <Warehouse /> Magazyn
+            </button>
+          </li>
+          <li>
+            <button className={`w-full flex items-center gap-2 px-4 py-3 rounded-xl transition font-semibold
+              ${current === "archive" ? "bg-blue-600/70 shadow-lg" : "hover:bg-blue-600/40"}`}
+              onClick={() => setTab("archive")}>
+              <ArchiveIcon /> Archiwum
+            </button>
+          </li>
+          <li>
+            <button className={`w-full flex items-center gap-2 px-4 py-3 rounded-xl transition font-semibold
+              ${current === "grafik" ? "bg-blue-600/70 shadow-lg" : "hover:bg-blue-600/40"}`}
+              onClick={() => setTab("grafik")}>
+              <Calendar /> Grafik
+            </button>
+          </li>
+        </ul>
+      </nav>
+      <button className="bg-red-500 hover:bg-red-700 w-full p-4 text-center rounded-b-2xl font-semibold transition mt-8" onClick={onLogout}>
+        <LogOut className="inline mr-2" /> Wyloguj
+      </button>
+    </aside>
   );
 }
